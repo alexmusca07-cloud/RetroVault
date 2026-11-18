@@ -13,7 +13,7 @@ import javax.swing.table.DefaultTableCellRenderer;
  *
  * @author musca
  */
-public class ConsolaColorRender extends DefaultTableCellRenderer {
+public class ConsolaColorRenderer extends DefaultTableCellRenderer {
 
     @Override
     public Component getTableCellRendererComponent(
