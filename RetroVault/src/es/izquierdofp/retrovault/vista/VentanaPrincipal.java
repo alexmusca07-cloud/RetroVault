@@ -4,6 +4,8 @@
  */
 package es.izquierdofp.retrovault.vista;
 
+import es.izquierdofp.retrovault.datos.JuegoDAO;
+
 /**
  *
  * @author musca
@@ -15,9 +17,16 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     /**
      * Creates new form VentanaPrincipal
      */
-    public VentanaPrincipal() {
-        initComponents();
-    }
+    // Añadir ANTES de "public VentanaPrincipal() {"
+private final JuegoDAO dao = new JuegoDAO();
+private JuegosTableModel modeloTabla;
+public VentanaPrincipal() {
+initComponents(); // generado por NetBeans — no borrar
+configurarTabla(); // conecta el modelo y el renderer
+configurarPopup(); // asocia el popup a la tabla
+cargarDatos(); // carga los juegos de la BD
+setLocationRelativeTo(null);// centra la ventana en pantalla
+}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -62,10 +71,12 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         popupTabla.add(popAnyadir);
 
         popEditar.setText("Editar Juego...");
+        popEditar.addActionListener(this::popEditarActionPerformed);
         popupTabla.add(popEditar);
         popupTabla.add(jSeparator2);
 
         popEliminar.setText("Eliminar Juego");
+        popEliminar.addActionListener(this::popEliminarActionPerformed);
         popupTabla.add(popEliminar);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -78,6 +89,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         panelFiltros.add(Consola);
 
         cmbConsola.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Todas", "NES", "SNES", "Mega Drive", "Game Boy", "PlayStation", "Nintendo 64", "Game Gear", "Arcade" }));
+        cmbConsola.addActionListener(this::cmbConsolaActionPerformed);
         panelFiltros.add(cmbConsola);
 
         Estado.setText("Estado");
@@ -94,6 +106,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         panelFiltros.add(btnLimpiar);
 
         btnAnyadir.setText("+ Añadir");
+        btnAnyadir.addActionListener(this::btnAnyadirActionPerformed);
         panelFiltros.add(btnAnyadir);
 
         getContentPane().add(panelFiltros, java.awt.BorderLayout.PAGE_START);
@@ -140,15 +153,18 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         mniAnyadir.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         mniAnyadir.setText("Añadir juego...");
+        mniAnyadir.addActionListener(this::mniAnyadirActionPerformed);
         mnJuegos.add(mniAnyadir);
 
         mniEditar.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_E, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         mniEditar.setText("Editar juego...");
+        mniEditar.addActionListener(this::mniEditarActionPerformed);
         mnJuegos.add(mniEditar);
         mnJuegos.add(jSeparator1);
 
         mniEliminar.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DELETE, 0));
         mniEliminar.setText("Eliminar juego");
+        mniEliminar.addActionListener(this::mniEliminarActionPerformed);
         mnJuegos.add(mniEliminar);
 
         jMenuBar1.add(mnJuegos);
@@ -157,6 +173,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         mniActualizar.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F5, 0));
         mniActualizar.setText("Actualizar");
+        mniActualizar.addActionListener(this::mniActualizarActionPerformed);
         mnVista.add(mniActualizar);
 
         jMenuBar1.add(mnVista);
@@ -167,8 +184,51 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnFiltrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFiltrarActionPerformed
-        // TODO add your handling code here:
+       String cons = (String) cmbConsola.getSelectedItem();
+String est = (String) cmbEstado.getSelectedItem();
+java.util.List<Juego> lista;
+if (!"Todas".equals(cons)) lista = dao.obtenerPorConsola(cons);
+else if (!"Todos".equals(est)) lista = dao.obtenerPorEstado(est);
+else lista = dao.obtenerTodos();
+modeloTabla.setJuegos(lista);
+cmbConsola.setSelectedIndex(0); cmbEstado.setSelectedIndex(0); cargarDatos();
     }//GEN-LAST:event_btnFiltrarActionPerformed
+
+    private void cmbConsolaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbConsolaActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbConsolaActionPerformed
+
+    private void mniAnyadirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniAnyadirActionPerformed
+        DialogoJuego dlg = new DialogoJuego(this, null); // null = nuevo
+dlg.setVisible(true);
+if (dlg.isGuardado()) { dao.insertar(dlg.getJuego()); cargarDatos(); }
+    }//GEN-LAST:event_mniAnyadirActionPerformed
+
+    private void btnAnyadirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAnyadirActionPerformed
+        DialogoJuego dlg = new DialogoJuego(this, null); // null = nuevo
+dlg.setVisible(true);
+if (dlg.isGuardado()) { dao.insertar(dlg.getJuego()); cargarDatos(); }
+    }//GEN-LAST:event_btnAnyadirActionPerformed
+
+    private void popEditarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_popEditarActionPerformed
+        editarSeleccionado();
+    }//GEN-LAST:event_popEditarActionPerformed
+
+    private void mniEditarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniEditarActionPerformed
+        editarSeleccionado();
+    }//GEN-LAST:event_mniEditarActionPerformed
+
+    private void mniEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniEliminarActionPerformed
+        eliminarSeleccionado();
+    }//GEN-LAST:event_mniEliminarActionPerformed
+
+    private void popEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_popEliminarActionPerformed
+        eliminarSeleccionado();
+    }//GEN-LAST:event_popEliminarActionPerformed
+
+    private void mniActualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mniActualizarActionPerformed
+        cargarDatos();
+    }//GEN-LAST:event_mniActualizarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -194,7 +254,78 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new VentanaPrincipal().setVisible(true));
     }
+    private void configurarTabla() {
+// Asignamos nuestro modelo personalizado a la tabla
+modeloTabla = new JuegosTableModel(new java.util.ArrayList<>());
+tablaJuegos.setModel(modeloTabla);
+// Aplicamos el renderer de colores a TODAS las columnas
+ConsolaColorRenderer renderer = new ConsolaColorRenderer();
+for (int i = 0; i < tablaJuegos.getColumnCount(); i++) {
+tablaJuegos.getColumnModel().getColumn(i).setCellRenderer(renderer);
+}
+// Anchuras preferidas de cada columna
+tablaJuegos.getColumnModel().getColumn(0).setPreferredWidth(35);
+tablaJuegos.getColumnModel().getColumn(1).setPreferredWidth(200);
+tablaJuegos.getColumnModel().getColumn(2).setPreferredWidth(110);
+tablaJuegos.getColumnModel().getColumn(3).setPreferredWidth(100);
+tablaJuegos.getColumnModel().getColumn(4).setPreferredWidth(50);
+tablaJuegos.getColumnModel().getColumn(5).setPreferredWidth(110);
+tablaJuegos.getColumnModel().getColumn(6).setPreferredWidth(100);
+// Doble clic en una fila abre el diálogo de edición
+tablaJuegos.addMouseListener(new java.awt.event.MouseAdapter() {
+@Override
+public void mouseClicked(java.awt.event.MouseEvent e) {
+if (e.getClickCount() == 2) editarSeleccionado();
+}
+});
+}
+private void configurarPopup() {
+// Asociar el popup al JTable
+tablaJuegos.setComponentPopupMenu(popupTabla);
+// Al hacer clic derecho, seleccionar la fila bajo el cursor
+tablaJuegos.addMouseListener(new java.awt.event.MouseAdapter() {
+@Override
+public void mousePressed(java.awt.event.MouseEvent e) {
+int fila = tablaJuegos.rowAtPoint(e.getPoint());
+if (fila >= 0) tablaJuegos.setRowSelectionInterval(fila, fila);
+}
+});
 
+}
+// Recarga todos los juegos de la BD y actualiza estadísticas
+private void cargarDatos() {
+modeloTabla.setJuegos(dao.obtenerTodos());
+actualizarEstadisticas();
+}
+private void actualizarEstadisticas() {
+int total = dao.contarTotal();
+int comp = dao.contarCompletados();
+double med = dao.puntuacionMedia();
+lblTotal.setText (" Total: " + total);
+lblCompletados.setText(" | Completados: " + comp);
+lblMedia.setText (" | Media: " +
+(total == 0 ? "–" : String.format("%.1f ", med))); ★
+}
+private void editarSeleccionado() {
+int fila = tablaJuegos.getSelectedRow();
+if (fila < 0) return;
+Juego j = modeloTabla.getJuego(fila);
+DialogoJuego dlg = new DialogoJuego(this, j);
+dlg.setVisible(true);
+if (dlg.isGuardado()) { dao.actualizar(dlg.getJuego()); cargarDatos(); }
+}
+private void eliminarSeleccionado() {
+int fila = tablaJuegos.getSelectedRow();
+if (fila < 0) return;
+Juego j = modeloTabla.getJuego(fila);
+int r = javax.swing.JOptionPane.showConfirmDialog(this,
+"¿Eliminar \"" + j.getTitulo() + "\" de tu biblioteca?",
+"Confirmar eliminación", javax.swing.JOptionPane.YES_NO_OPTION,
+javax.swing.JOptionPane.WARNING_MESSAGE);
+if (r == javax.swing.JOptionPane.YES_OPTION) {
+dao.eliminar(j.getId()); cargarDatos();
+}
+}
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel Consola;
     private javax.swing.JLabel Estado;
